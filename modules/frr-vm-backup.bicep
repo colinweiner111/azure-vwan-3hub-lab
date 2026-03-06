@@ -198,6 +198,10 @@ write_files:
       ! Static route for on-prem network
       ip route 10.0.0.0/16 Null0
       !
+      ! Allow next-hop resolution via default route (required for BGP
+      ! next-hops reachable only through IPsec tunnel policies)
+      ip nht resolve-via-default
+      !
       ! === Prefix Lists ===
       ! ONPREM: static on-prem prefix only
       ip prefix-list ONPREM seq 5 permit 10.0.0.0/16
@@ -220,6 +224,11 @@ write_files:
         match ip address prefix-list AZURE_LEARNED
         set as-path exclude 65515
       route-map TRANSIT_OUT deny 100
+      !
+      ! TRANSIT_IN: strip Azure VPN GW ASN on inbound to avoid sender-side
+      ! eBGP loop check when re-advertising to another AS 65515 peer
+      route-map TRANSIT_IN permit 10
+        set as-path exclude 65515
       !
       ! STANDARD_OUT: only advertise on-prem prefix (no transit)
       route-map STANDARD_OUT permit 10
@@ -262,11 +271,15 @@ write_files:
           !
           ! Hub1: accept all, advertise on-prem + transit routes
           neighbor {3} soft-reconfiguration inbound
+          neighbor {3} route-map TRANSIT_IN in
           neighbor {3} route-map TRANSIT_OUT out
+          neighbor {3} as-override
           !
           ! Hub3: accept all, advertise on-prem + transit routes
           neighbor {7} soft-reconfiguration inbound
+          neighbor {7} route-map TRANSIT_IN in
           neighbor {7} route-map TRANSIT_OUT out
+          neighbor {7} as-override
           !
           ! Hub2: accept all, advertise on-prem only (no transit)
           neighbor {5} soft-reconfiguration inbound
