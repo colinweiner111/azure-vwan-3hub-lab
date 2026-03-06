@@ -33,20 +33,15 @@ param resourceGroupName string = 'vwan-3hub-lab'
 @description('Virtual WAN name')
 param vwanName string = 'vwan-3hub'
 
-@description('Hub name')
-param hubName string = 'hub1-westus3'
-
-@description('Secondary hub name')
-param hub2Name string = 'hub2-eastus2'
-
 @description('Secondary hub region')
 param hub2Location string = 'eastus2'
 
-@description('Tertiary hub name')
-param hub3Name string = 'hub3-westus'
-
 @description('Tertiary hub region')
 param hub3Location string = 'westus'
+
+var hubName = 'hub1-${location}'
+var hub2Name = 'hub2-${hub2Location}'
+var hub3Name = 'hub3-${hub3Location}'
 
 @description('Admin username for VMs')
 param adminUsername string = 'azureuser'
