@@ -154,13 +154,16 @@ cd azure-vwan-3hub-lab
 ### Scenario 1: Verify All Tunnels and BGP Sessions
 
 1. SSH to both FRR routers (IPs shown in deployment output)
-2. Verify IPsec tunnels (expect 3 each — one per hub):
+2. Verify IPsec tunnels (expect 3 SAs — one tunnel to each hub's VPN gateway):
    ```bash
    sudo ipsec status
+   # Look for 3 ESTABLISHED tunnels: hub1-tunnel, hub2-tunnel, hub3-tunnel
    ```
-3. Verify BGP sessions (expect 3 peers each — one per hub):
+3. Verify BGP sessions are established with all three hub VPN gateways:
    ```bash
    sudo vtysh -c "show ip bgp summary"
+   # Expect 3 peers in Established state — the BGP peer IPs are the VPN gateway
+   # instance IPs inside each hub (found in Azure Portal → VPN Gateway → BGP Settings)
    ```
 4. Verify transit routes being advertised to Hub1 and Hub3:
    ```bash
