@@ -64,8 +64,8 @@ resource hub2 'Microsoft.Network/virtualHubs@2023-11-01' = {
       id: vwan.id
     }
     sku: 'Standard'
-    // Hub2 keeps ExpressRoute preference (default) - it doesn't participate in transit
-    hubRoutingPreference: 'ExpressRoute'
+    // Hub2 (westus3) uses VpnGateway preference - VPN-learned routes beat Remote Hub
+    hubRoutingPreference: 'VpnGateway'
   }
 }
 
@@ -81,8 +81,8 @@ resource hub3 'Microsoft.Network/virtualHubs@2023-11-01' = {
       id: vwan.id
     }
     sku: 'Standard'
-    // VpnGateway preference so VPN-learned routes beat Remote Hub
-    hubRoutingPreference: 'VpnGateway'
+    // Hub3 (eastus2) keeps ExpressRoute preference (default) - control hub, no VPN override
+    hubRoutingPreference: 'ExpressRoute'
   }
 }
 

@@ -14,13 +14,13 @@ param(
     [string]$ResourceGroupName = "vwan-3hub-lab",
     
     [Parameter(Mandatory=$false)]
-    [string]$Location = "westus3",
+    [string]$Location = "westus",
 
     [Parameter(Mandatory=$false)]
-    [string]$Hub2Location = "eastus2",
+    [string]$Hub2Location = "westus3",
 
     [Parameter(Mandatory=$false)]
-    [string]$Hub3Location = "westus",
+    [string]$Hub3Location = "eastus2",
     
     [Parameter(Mandatory=$false)]
     [string]$AdminUsername = "azureuser",
