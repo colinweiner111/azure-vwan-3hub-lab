@@ -7,7 +7,7 @@ targetScope = 'subscription'
 // inter-hub (Remote Hub) routes in Azure Virtual WAN.
 //
 // Architecture:
-// - 3 vWAN Hubs: Hub1 (westus3), Hub2 (eastus2), Hub3 (westus)
+// - 3 vWAN Hubs: Hub1 (westus), Hub2 (westus3), Hub3 (eastus2)
 // - 2 on-prem FRR/strongSwan VMs, each with 3 IPsec tunnels (one per hub)
 //   * VM1 (frr-router): Tunnels to Hub1/Hub2/Hub3 VPN GW Instance 0
 //   * VM2 (frr-router-backup): Tunnels to Hub1/Hub2/Hub3 VPN GW Instance 1
@@ -25,7 +25,7 @@ targetScope = 'subscription'
 // =============================================================================
 
 @description('Primary region for deployment')
-param location string = 'westus3'
+param location string = 'westus'
 
 @description('Resource group name')
 param resourceGroupName string = 'vwan-3hub-lab'
@@ -34,10 +34,10 @@ param resourceGroupName string = 'vwan-3hub-lab'
 param vwanName string = 'vwan-3hub'
 
 @description('Secondary hub region')
-param hub2Location string = 'eastus2'
+param hub2Location string = 'westus3'
 
 @description('Tertiary hub region')
-param hub3Location string = 'westus'
+param hub3Location string = 'eastus2'
 
 var hubName = 'hub1-${location}'
 var hub2Name = 'hub2-${hub2Location}'

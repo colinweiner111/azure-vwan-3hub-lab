@@ -18,13 +18,13 @@ This lab uses **two on-prem FRRouting/strongSwan VMs** with **six total IPsec tu
 
 | Hub | FRR Peer Role | BGP Outbound Policy |
 |-----|---------------|---------------------|
-| Hub1 (westus3) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub3 |
-| Hub2 (eastus2) | **STANDARD** | On-prem `10.0.0.0/16` only (no transit re-advertisement) |
-| Hub3 (westus) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub1 |
+| Hub1 (westus) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub3 |
+| Hub2 (westus3) | **STANDARD** | On-prem `10.0.0.0/16` only (no transit re-advertisement) |
+| Hub3 (eastus2) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub1 |
 
 ### IP Address Summary
 
-| Component | Hub1 (westus3) | Hub2 (eastus2) | Hub3 (westus) |
+| Component | Hub1 (westus) | Hub2 (westus3) | Hub3 (eastus2) |
 |-----------|---------------|----------------|---------------|
 | Hub address prefix | `192.168.1.0/24` | `192.168.2.0/24` | `192.168.3.0/24` |
 | Spoke VNets | spoke1 (`10.100.0.0/16`), spoke2 (`10.200.0.0/16`) | spoke3 (`10.110.0.0/16`), spoke4 (`10.210.0.0/16`) | spoke5 (`10.120.0.0/16`), spoke6 (`10.220.0.0/16`) |
@@ -132,13 +132,13 @@ git clone https://github.com/colinweiner111/azure-vwan-3hub-lab.git
 cd azure-vwan-3hub-lab
 
 # Deploy the lab (~30-45 minutes — 3 VPN Gateways deploy in parallel)
-.\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus3 -VpnPsk "YourPreSharedKey123!"
+.\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus -VpnPsk "YourPreSharedKey123!"
 
 # Optional: Deploy with Azure Bastion for VM access (adds ~5 min)
-.\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus3 -VpnPsk "YourPreSharedKey123!" -EnableBastion
+.\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus -VpnPsk "YourPreSharedKey123!" -EnableBastion
 
 # Optional: Deploy with Azure Firewall on all hubs (adds ~15 min)
-.\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus3 -VpnPsk "YourPreSharedKey123!" -EnableFirewall
+.\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus -VpnPsk "YourPreSharedKey123!" -EnableFirewall
 ```
 
 ### Default Credentials
@@ -194,19 +194,19 @@ cd azure-vwan-3hub-lab
 $rg = "vwan-3hub-lab"
 
 # Hub1 effective routes — should show Hub3 spokes via VPN Gateway
-az network vhub get-effective-routes -g $rg -n hub1-westus3 `
+az network vhub get-effective-routes -g $rg -n hub1-westus `
   --resource-type HubVirtualNetworkConnection `
-  --resource-id (az network vhub connection show -g $rg --vhub-name hub1-westus3 -n conn-spoke1 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
+  --resource-id (az network vhub connection show -g $rg --vhub-name hub1-westus -n conn-spoke1 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
 
 # Hub2 effective routes — should show all remote spokes via Remote Hub
-az network vhub get-effective-routes -g $rg -n hub2-eastus2 `
+az network vhub get-effective-routes -g $rg -n hub2-westus3 `
   --resource-type HubVirtualNetworkConnection `
-  --resource-id (az network vhub connection show -g $rg --vhub-name hub2-eastus2 -n conn-spoke3 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
+  --resource-id (az network vhub connection show -g $rg --vhub-name hub2-westus3 -n conn-spoke3 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
 
 # Hub3 effective routes — should show Hub1 spokes via VPN Gateway
-az network vhub get-effective-routes -g $rg -n hub3-westus `
+az network vhub get-effective-routes -g $rg -n hub3-eastus2 `
   --resource-type HubVirtualNetworkConnection `
-  --resource-id (az network vhub connection show -g $rg --vhub-name hub3-westus -n conn-spoke5 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
+  --resource-id (az network vhub connection show -g $rg --vhub-name hub3-eastus2 -n conn-spoke5 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
 ```
 
 ### Scenario 4: Disable Transit to Restore Normal Routing
