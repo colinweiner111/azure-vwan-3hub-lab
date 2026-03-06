@@ -141,6 +141,8 @@ cd azure-vwan-3hub-lab
 .\deploy-bicep.ps1 -ResourceGroupName vwan-3hub-lab -Location westus -VpnPsk "YourPreSharedKey123!" -EnableFirewall
 ```
 
+> **Note:** Hub regions are customizable. Use `-Hub2Location` and `-Hub3Location` to override. Hub names are auto-generated from regions (e.g., `hub1-eastus`, `hub2-centralus`).
+
 ### Default Credentials
 
 | Setting | Value |
