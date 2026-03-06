@@ -149,21 +149,21 @@
   <!-- ==================== S2S VPN TUNNELS (hub VPN GW → on-prem) ==================== -->
   <!-- Hub1 → On-Prem (red = transit) -->
   <line x1="200" y1="360" x2="340" y2="530" stroke="#e81123" stroke-width="2.5" marker-end="url(#arrowTransit)" />
-  <rect x="175" y="438" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#e81123" stroke-width="1" />
-  <text x="235" y="454" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
-  <text x="235" y="467" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
+  <rect x="175" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#e81123" stroke-width="1" />
+  <text x="235" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
+  <text x="235" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
 
   <!-- Hub2 → On-Prem (green = standard) -->
   <line x1="580" y1="360" x2="530" y2="530" stroke="#107c10" stroke-width="2.5" marker-end="url(#arrowNormal)" />
-  <rect x="498" y="438" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#107c10" stroke-width="1" />
-  <text x="558" y="454" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">S2S VPN</text>
-  <text x="558" y="467" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">STANDARD (2 tunnels)</text>
+  <rect x="498" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#107c10" stroke-width="1" />
+  <text x="558" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">S2S VPN</text>
+  <text x="558" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">STANDARD (2 tunnels)</text>
 
   <!-- Hub3 → On-Prem (red = transit) -->
   <line x1="960" y1="360" x2="760" y2="530" stroke="#e81123" stroke-width="2.5" marker-end="url(#arrowTransit)" />
-  <rect x="815" y="438" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#e81123" stroke-width="1" />
-  <text x="875" y="454" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
-  <text x="875" y="467" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
+  <rect x="815" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#e81123" stroke-width="1" />
+  <text x="875" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
+  <text x="875" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
 
   <!-- ==================== ROUTE PRECEDENCE BOX ==================== -->
   <rect x="350" y="392" width="460" height="52" rx="8" ry="8" fill="#fff4ce" stroke="#ffb900" stroke-width="1.5" />
