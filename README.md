@@ -92,6 +92,8 @@ The issue occurs when on-premises BGP advertises Azure prefixes learned from one
 
 Because Virtual WAN prefers gateway-learned routes over inter-hub (Remote Hub) routes, the VPN gateway route is selected as the best path — even though the vWAN backbone provides a more direct route.
 
+> **Note:** The default Hub Routing Preference is `ExpressRoute`, with route precedence: **AS Path → ExpressRoute → VPN Gateway → Remote Hub**. In this lab, Hub1 and Hub3 are set to `VpnGateway` preference, which changes precedence to: **VPN Gateway → ExpressRoute → Remote Hub**. This ensures VPN gateway-learned routes always win over Remote Hub routes on those hubs.
+
 This behavior is expected in Virtual WAN when a prefix is learned from multiple sources and one path is learned through a gateway. It is not a defect — it is a consequence of route selection design.
 
 ### Route Flow

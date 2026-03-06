@@ -166,9 +166,10 @@
   <text x="875" y="467" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
 
   <!-- ==================== ROUTE PRECEDENCE BOX ==================== -->
-  <rect x="350" y="392" width="460" height="42" rx="8" ry="8" fill="#fff4ce" stroke="#ffb900" stroke-width="1.5" />
-  <text x="580" y="410" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8a6914">⚠ vWAN Route Precedence: VPN Gateway  &gt;  ExpressRoute  &gt;  Remote Hub</text>
-  <text x="580" y="426" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#a38329">Hub1 &amp; Hub3 prefer VPN path through on-prem over vWAN backbone</text>
+  <rect x="350" y="392" width="460" height="52" rx="8" ry="8" fill="#fff4ce" stroke="#ffb900" stroke-width="1.5" />
+  <text x="580" y="410" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8a6914">⚠ Hub Routing Preference set to VpnGateway (Hub1 &amp; Hub3)</text>
+  <text x="580" y="426" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#a38329">This makes route precedence: VPN Gateway &gt; ExpressRoute &gt; Remote Hub</text>
+  <text x="580" y="440" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#a38329">Default precedence is: AS Path &gt; ExpressRoute &gt; VPN Gateway &gt; Remote Hub</text>
 
   <!-- ==================== ON-PREM BOUNDARY ==================== -->
   <rect x="180" y="500" width="820" height="540" rx="16" ry="16" fill="url(#onpremGrad)" stroke="#ff8c00" stroke-width="2" stroke-dasharray="8,4" />
