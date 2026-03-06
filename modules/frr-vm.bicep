@@ -6,8 +6,8 @@
 // - Cloud-init configuration for:
 //   * 3 IPsec tunnels to each hub's vWAN VPN Gateway Instance 0
 //   * BGP peers to each Instance 0, advertising on-prem 10.0.0.0/16
-//   * Transit routing: re-advertises routes learned from Hub1 ↔ Hub3
-//   * Hub2 only receives static on-prem prefix (no transit)
+//   * Transit routing: re-advertises routes learned from Hub1 ↔ Hub2
+//   * Hub3 only receives static on-prem prefix (no transit)
 // =============================================================================
 
 param location string
@@ -184,8 +184,8 @@ write_files:
       vrrpd=no
       pathd=no
 
-  # FRR configuration - Transit router between Hub1 and Hub3
-  # Hub2 only gets static on-prem prefix (no transit re-advertisement)
+  # FRR configuration - Transit router between Hub1 and Hub2
+  # Hub3 only gets static on-prem prefix (no transit re-advertisement)
   # __LOCAL_IP__ will be replaced at runtime with actual private IP
   - path: /etc/frr/frr.conf
     content: |
@@ -241,30 +241,30 @@ write_files:
         no bgp ebgp-requires-policy
         bgp log-neighbor-changes
         !
-        ! --- TRANSIT peers: Hub1 and Hub3 (re-advertise between them) ---
+        ! --- TRANSIT peers: Hub1 and Hub2 (re-advertise between them) ---
         !
-        ! Hub1 (westus3) - VPN GW Instance 0
+        ! Hub1 (westus) - VPN GW Instance 0
         neighbor {3} remote-as 65515
         neighbor {3} ebgp-multihop 64
         neighbor {3} update-source __LOCAL_IP__
         neighbor {3} timers 3 9
         neighbor {3} description TRANSIT-HUB1
         !
-        ! Hub3 (westus) - VPN GW Instance 0
-        neighbor {7} remote-as 65515
-        neighbor {7} ebgp-multihop 64
-        neighbor {7} update-source __LOCAL_IP__
-        neighbor {7} timers 3 9
-        neighbor {7} description TRANSIT-HUB3
-        !
-        ! --- STANDARD peer: Hub2 (on-prem only, no transit) ---
-        !
-        ! Hub2 (eastus2) - VPN GW Instance 0
+        ! Hub2 (westus3) - VPN GW Instance 0
         neighbor {5} remote-as 65515
         neighbor {5} ebgp-multihop 64
         neighbor {5} update-source __LOCAL_IP__
         neighbor {5} timers 3 9
-        neighbor {5} description STANDARD-HUB2
+        neighbor {5} description TRANSIT-HUB2
+        !
+        ! --- STANDARD peer: Hub3 (on-prem only, no transit) ---
+        !
+        ! Hub3 (eastus2) - VPN GW Instance 0
+        neighbor {7} remote-as 65515
+        neighbor {7} ebgp-multihop 64
+        neighbor {7} update-source __LOCAL_IP__
+        neighbor {7} timers 3 9
+        neighbor {7} description STANDARD-HUB3
         !
         address-family ipv4 unicast
           redistribute static
@@ -275,15 +275,15 @@ write_files:
           neighbor {3} route-map TRANSIT_OUT out
           neighbor {3} as-override
           !
-          ! Hub3: accept all, advertise on-prem + transit routes
-          neighbor {7} soft-reconfiguration inbound
-          neighbor {7} route-map TRANSIT_IN in
-          neighbor {7} route-map TRANSIT_OUT out
-          neighbor {7} as-override
-          !
-          ! Hub2: accept all, advertise on-prem only (no transit)
+          ! Hub2: accept all, advertise on-prem + transit routes
           neighbor {5} soft-reconfiguration inbound
-          neighbor {5} route-map STANDARD_OUT out
+          neighbor {5} route-map TRANSIT_IN in
+          neighbor {5} route-map TRANSIT_OUT out
+          neighbor {5} as-override
+          !
+          ! Hub3: accept all, advertise on-prem only (no transit)
+          neighbor {7} soft-reconfiguration inbound
+          neighbor {7} route-map STANDARD_OUT out
         exit-address-family
       !
       line vty
