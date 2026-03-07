@@ -98,7 +98,7 @@
   <rect x="50" y="225" width="300" height="135" rx="12" ry="12" fill="#ffffff" stroke="#0078d4" stroke-width="2" />
   <rect x="50" y="225" width="300" height="32" rx="12" ry="12" fill="url(#azureBlue)" />
   <rect x="50" y="243" width="300" height="14" fill="url(#azureBlue)" />
-  <text x="200" y="247" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Hub1 — westus3</text>
+  <text x="200" y="247" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Hub1 — westus</text>
   <rect x="280" y="230" width="62" height="18" rx="9" ry="9" fill="#e81123" />
   <text x="311" y="243" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff">TRANSIT</text>
   <text x="200" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#323130">192.168.1.0/24</text>
@@ -111,9 +111,9 @@
   <rect x="430" y="225" width="300" height="135" rx="12" ry="12" fill="#ffffff" stroke="#0078d4" stroke-width="2" />
   <rect x="430" y="225" width="300" height="32" rx="12" ry="12" fill="url(#azureBlue)" />
   <rect x="430" y="243" width="300" height="14" fill="url(#azureBlue)" />
-  <text x="580" y="247" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Hub2 — eastus2</text>
-  <rect x="660" y="230" width="62" height="18" rx="9" ry="9" fill="#107c10" />
-  <text x="691" y="243" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff">STANDARD</text>
+  <text x="580" y="247" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Hub2 — westus3</text>
+  <rect x="660" y="230" width="62" height="18" rx="9" ry="9" fill="#e81123" />
+  <text x="691" y="243" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff">TRANSIT</text>
   <text x="580" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#323130">192.168.2.0/24</text>
   <rect x="490" y="288" width="180" height="26" rx="6" ry="6" fill="#0078d4" opacity="0.1" stroke="#0078d4" stroke-width="1" />
   <text x="580" y="306" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#0078d4">VPN Gateway (ASN 65515)</text>
@@ -124,27 +124,31 @@
   <rect x="810" y="225" width="300" height="135" rx="12" ry="12" fill="#ffffff" stroke="#0078d4" stroke-width="2" />
   <rect x="810" y="225" width="300" height="32" rx="12" ry="12" fill="url(#azureBlue)" />
   <rect x="810" y="243" width="300" height="14" fill="url(#azureBlue)" />
-  <text x="960" y="247" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Hub3 — westus</text>
-  <rect x="1040" y="230" width="62" height="18" rx="9" ry="9" fill="#e81123" />
-  <text x="1071" y="243" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff">TRANSIT</text>
+  <text x="960" y="247" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Hub3 — eastus2</text>
+  <rect x="1040" y="230" width="62" height="18" rx="9" ry="9" fill="#107c10" />
+  <text x="1071" y="243" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff">STANDARD</text>
   <text x="960" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#323130">192.168.3.0/24</text>
   <rect x="870" y="288" width="180" height="26" rx="6" ry="6" fill="#0078d4" opacity="0.1" stroke="#0078d4" stroke-width="1" />
   <text x="960" y="306" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#0078d4">VPN Gateway (ASN 65515)</text>
   <text x="960" y="330" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#605e5c">Instance 0 + Instance 1</text>
   <text x="960" y="350" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#605e5c">↓ S2S VPN to On-Prem</text>
 
-  <!-- ==================== HUB-TO-HUB ROUTING ==================== -->
-  <!-- Hub1 ↔ Hub2 (green - working) -->
-  <line x1="350" y1="270" x2="430" y2="270" stroke="#107c10" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#arrowNormal)" />
-  <text x="390" y="264" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">Remote Hub</text>
+  <!-- ==================== HUB-TO-HUB ROUTING (full mesh — 3 direct links) ==================== -->
 
-  <!-- Hub2 ↔ Hub3 (green - working) -->
-  <line x1="730" y1="270" x2="810" y2="270" stroke="#107c10" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#arrowNormal)" />
-  <text x="770" y="264" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">Remote Hub</text>
+  <!-- Hub1 ↔ Hub2: OVERRIDDEN (red dashed — VPN gateway-learned routes win) -->
+  <line x1="350" y1="260" x2="430" y2="260" stroke="#e81123" stroke-width="2" stroke-dasharray="4,4" opacity="0.5" />
+  <text x="390" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">Remote Hub ✗</text>
 
-  <!-- Hub1 ↔ Hub3 overridden path (red dashed across top of hubs) -->
-  <line x1="200" y1="220" x2="960" y2="220" stroke="#e81123" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.4" />
-  <text x="580" y="214" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#e81123">✗ Hub1 ↔ Hub3 Remote Hub path OVERRIDDEN by VPN gateway-learned routes</text>
+  <!-- Hub2 ↔ Hub3: Working (green) -->
+  <line x1="730" y1="260" x2="810" y2="260" stroke="#107c10" stroke-width="2.5" stroke-dasharray="6,3" />
+  <text x="770" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">Remote Hub</text>
+
+  <!-- Hub1 ↔ Hub3: Working (green arc directly over Hub2) -->
+  <path d="M 200 225 C 400 170, 760 170, 960 225" fill="none" stroke="#107c10" stroke-width="2.5" stroke-dasharray="6,3" />
+  <text x="580" y="174" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">Remote Hub</text>
+
+  <!-- Override callout -->
+  <text x="390" y="214" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#e81123">✗ Hub1 ↔ Hub2 Remote Hub path OVERRIDDEN by VPN gateway-learned routes</text>
 
   <!-- ==================== S2S VPN TUNNELS (hub VPN GW → on-prem) ==================== -->
   <!-- Hub1 → On-Prem (red = transit) -->
@@ -153,21 +157,21 @@
   <text x="235" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
   <text x="235" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
 
-  <!-- Hub2 → On-Prem (green = standard) -->
-  <line x1="580" y1="360" x2="530" y2="530" stroke="#107c10" stroke-width="2.5" marker-end="url(#arrowNormal)" />
-  <rect x="498" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#107c10" stroke-width="1" />
-  <text x="558" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">S2S VPN</text>
-  <text x="558" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">STANDARD (2 tunnels)</text>
+  <!-- Hub2 → On-Prem (red = transit) -->
+  <line x1="580" y1="360" x2="530" y2="530" stroke="#e81123" stroke-width="2.5" marker-end="url(#arrowTransit)" />
+  <rect x="498" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#e81123" stroke-width="1" />
+  <text x="558" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
+  <text x="558" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
 
-  <!-- Hub3 → On-Prem (red = transit) -->
-  <line x1="960" y1="360" x2="760" y2="530" stroke="#e81123" stroke-width="2.5" marker-end="url(#arrowTransit)" />
-  <rect x="815" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#e81123" stroke-width="1" />
-  <text x="875" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">S2S VPN</text>
-  <text x="875" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#e81123">TRANSIT (2 tunnels)</text>
+  <!-- Hub3 → On-Prem (green = standard) -->
+  <line x1="960" y1="360" x2="760" y2="530" stroke="#107c10" stroke-width="2.5" marker-end="url(#arrowNormal)" />
+  <rect x="815" y="460" width="120" height="36" rx="6" ry="6" fill="#ffffff" stroke="#107c10" stroke-width="1" />
+  <text x="875" y="476" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">S2S VPN</text>
+  <text x="875" y="489" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#107c10">STANDARD (2 tunnels)</text>
 
   <!-- ==================== ROUTE PRECEDENCE BOX ==================== -->
   <rect x="350" y="392" width="460" height="52" rx="8" ry="8" fill="#fff4ce" stroke="#ffb900" stroke-width="1.5" />
-  <text x="580" y="410" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8a6914">⚠ Hub Routing Preference set to VpnGateway (Hub1 &amp; Hub3)</text>
+  <text x="580" y="410" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8a6914">⚠ Hub Routing Preference set to VpnGateway (Hub1 &amp; Hub2)</text>
   <text x="580" y="425" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#a38329">VpnGateway precedence: VPN Gateway &gt; ExpressRoute &gt; Remote Hub</text>
   <text x="580" y="438" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#a38329">Default (ExpressRoute): ER &gt; VPN GW &gt; Remote Hub  |  AS Path mode: shortest path wins</text>
 
@@ -193,17 +197,17 @@
   <rect x="228" y="644" width="324" height="18" fill="#fce4ec" />
   <text x="238" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#323130">Hub1 GW Inst.0</text>
   <text x="390" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">TRANSIT_OUT</text>
-  <text x="492" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub3 spokes</text>
+  <text x="492" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub2 spokes</text>
 
-  <rect x="228" y="662" width="324" height="18" fill="#e8f5e9" />
+  <rect x="228" y="662" width="324" height="18" fill="#fce4ec" />
   <text x="238" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#323130">Hub2 GW Inst.0</text>
-  <text x="390" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">STANDARD_OUT</text>
-  <text x="492" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 only</text>
+  <text x="390" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">TRANSIT_OUT</text>
+  <text x="492" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub1 spokes</text>
 
-  <rect x="228" y="680" width="324" height="18" fill="#fce4ec" />
+  <rect x="228" y="680" width="324" height="18" fill="#e8f5e9" />
   <text x="238" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#323130">Hub3 GW Inst.0</text>
-  <text x="390" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">TRANSIT_OUT</text>
-  <text x="492" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub1 spokes</text>
+  <text x="390" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">STANDARD_OUT</text>
+  <text x="492" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 only</text>
 
   <!-- AS-path warning -->
   <rect x="228" y="706" width="324" height="30" rx="4" ry="4" fill="#fff8e1" stroke="#ffc107" stroke-width="1" />
@@ -232,17 +236,17 @@
   <rect x="628" y="644" width="324" height="18" fill="#fce4ec" />
   <text x="638" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#323130">Hub1 GW Inst.1</text>
   <text x="790" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">TRANSIT_OUT</text>
-  <text x="892" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub3 spokes</text>
+  <text x="892" y="657" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub2 spokes</text>
 
-  <rect x="628" y="662" width="324" height="18" fill="#e8f5e9" />
+  <rect x="628" y="662" width="324" height="18" fill="#fce4ec" />
   <text x="638" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#323130">Hub2 GW Inst.1</text>
-  <text x="790" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">STANDARD_OUT</text>
-  <text x="892" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 only</text>
+  <text x="790" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">TRANSIT_OUT</text>
+  <text x="892" y="675" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub1 spokes</text>
 
-  <rect x="628" y="680" width="324" height="18" fill="#fce4ec" />
+  <rect x="628" y="680" width="324" height="18" fill="#e8f5e9" />
   <text x="638" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="9" fill="#323130">Hub3 GW Inst.1</text>
-  <text x="790" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#e81123">TRANSIT_OUT</text>
-  <text x="892" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 + Hub1 spokes</text>
+  <text x="790" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="bold" fill="#107c10">STANDARD_OUT</text>
+  <text x="892" y="693" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#605e5c">10.0.0.0 only</text>
 
   <rect x="628" y="706" width="324" height="30" rx="4" ry="4" fill="#fff8e1" stroke="#ffc107" stroke-width="1" />
   <text x="790" y="720" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8" fill="#8a6914">⚠ TRANSIT_OUT uses: set as-path exclude 65515</text>
@@ -254,14 +258,14 @@
 
   <!-- ==================== TRANSIT FLOW ==================== -->
   <path d="M 390 810 C 390 850, 790 850, 790 810" fill="none" stroke="#e81123" stroke-width="2" stroke-dasharray="6,3" />
-  <text x="590" y="845" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" font-weight="bold" fill="#e81123">← Hub1 spoke routes re-advertised to Hub3 (and vice versa) →</text>
+  <text x="590" y="845" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" font-weight="bold" fill="#e81123">← Hub1 spoke routes re-advertised to Hub2 (and vice versa) →</text>
 
   <!-- ==================== DATA FLOW EXPLANATION ==================== -->
   <rect x="210" y="870" width="760" height="80" rx="8" ry="8" fill="#f0f6ff" stroke="#0078d4" stroke-width="1" />
   <text x="590" y="890" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="bold" fill="#0078d4">Route Flow — How the Override Happens</text>
   <text x="590" y="908" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#323130">1. Hub1 VPN GW sends spoke1/spoke2 routes to FRR via BGP  →  2. FRR learns them (AS-path: 65515)</text>
-  <text x="590" y="924" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#323130">3. FRR strips 65515 and re-advertises to Hub3 VPN GW  →  4. Hub3 accepts (no loop detected)</text>
-  <text x="590" y="940" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#e81123">5. Hub3 now has VPN GW path to Hub1 spokes → VPN wins over Remote Hub (same in reverse)</text>
+  <text x="590" y="924" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#323130">3. FRR strips 65515 and re-advertises to Hub2 VPN GW  →  4. Hub2 accepts (no loop detected)</text>
+  <text x="590" y="940" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#e81123">5. Hub2 now has VPN GW path to Hub1 spokes → VPN wins over Remote Hub (same in reverse)</text>
 
   <!-- ==================== LEGEND ==================== -->
   <rect x="30" y="490" width="140" height="120" rx="8" ry="8" fill="#ffffff" stroke="#c8c6c4" stroke-width="1" />
