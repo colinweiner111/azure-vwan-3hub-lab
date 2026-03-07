@@ -13,11 +13,11 @@ targetScope = 'subscription'
 //   * VM2 (frr-router-backup): Tunnels to Hub1/Hub2/Hub3 VPN GW Instance 1
 //   * Both advertise the same on-prem prefix: 10.0.0.0/16
 // - Transit routing via FRR:
-//   * Hub1 ↔ Hub3: FRR re-advertises Azure-learned routes between them
-//   * Hub2: Only receives static on-prem prefix (no transit re-advertisement)
+//   * Hub1 ↔ Hub2: FRR re-advertises Azure-learned routes between them
+//   * Hub3: Only receives static on-prem prefix (no transit re-advertisement)
 //
 // Expected result:
-// - Hub1 and Hub3 see each other's spokes via NextHopType=VpnGateway
+// - Hub1 and Hub2 see each other's spokes via NextHopType=VpnGateway
 //   (overrides the normal RemoteHub path)
 // - Hub2 sees all other hub spokes via NextHopType=RemoteHub (normal behavior)
 //
@@ -130,7 +130,7 @@ module vpnGatewayHub3 'modules/vpn-gateway.bicep' = {
 // FRR/strongSwan VMs - Transit Routers (on-prem, tunnels to all 3 hubs)
 // =============================================================================
 
-// Primary router (Instance 0 peers) - re-advertises between Hub1 ↔ Hub3
+// Primary router (Instance 0 peers) - re-advertises between Hub1 ↔ Hub2
 module frrVm 'modules/frr-vm.bicep' = {
   scope: rg
   name: 'frr-vm-deployment'

@@ -87,6 +87,68 @@ resource hub3 'Microsoft.Network/virtualHubs@2023-11-01' = {
 }
 
 // =============================================================================
+// Route Table for On-Prem Workloads subnet
+// Sends spoke-bound traffic through the FRR router so it reaches Azure via VTI
+// =============================================================================
+resource onpremWorkloadUdr 'Microsoft.Network/routeTables@2023-11-01' = {
+  name: 'onprem-workloads-udr'
+  location: location
+  properties: {
+    disableBgpRoutePropagation: false
+    routes: [
+      {
+        name: 'spoke1'
+        properties: {
+          addressPrefix: '10.100.0.0/16'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '10.0.0.10'
+        }
+      }
+      {
+        name: 'spoke2'
+        properties: {
+          addressPrefix: '10.200.0.0/16'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '10.0.0.10'
+        }
+      }
+      {
+        name: 'spoke3'
+        properties: {
+          addressPrefix: '10.110.0.0/16'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '10.0.0.10'
+        }
+      }
+      {
+        name: 'spoke4'
+        properties: {
+          addressPrefix: '10.210.0.0/16'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '10.0.0.10'
+        }
+      }
+      {
+        name: 'spoke5'
+        properties: {
+          addressPrefix: '10.120.0.0/16'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '10.0.0.10'
+        }
+      }
+      {
+        name: 'spoke6'
+        properties: {
+          addressPrefix: '10.220.0.0/16'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '10.0.0.10'
+        }
+      }
+    ]
+  }
+}
+
+// =============================================================================
 // On-Prem VNet - Simulates customer's on-premises network
 // Contains FRR/strongSwan router VM that creates 2 tunnels to vWAN
 // Address Space: 10.0.0.0/16 (what will be advertised to Azure)
@@ -115,6 +177,9 @@ resource onpremVnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
           networkSecurityGroup: {
             id: onpremNsg.id
           }
+          routeTable: {
+            id: onpremWorkloadUdr.id
+          }
         }
       }
       {
@@ -123,6 +188,9 @@ resource onpremVnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
           addressPrefix: '10.0.2.0/24'
           networkSecurityGroup: {
             id: onpremNsg.id
+          }
+          routeTable: {
+            id: onpremWorkloadUdr.id
           }
         }
       }

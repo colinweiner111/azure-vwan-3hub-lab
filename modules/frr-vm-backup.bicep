@@ -62,7 +62,8 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
       {
         name: 'ipconfig1'
         properties: {
-          privateIPAllocationMethod: 'Dynamic'
+          privateIPAllocationMethod: 'Static'
+          privateIPAddress: '10.0.0.11'
           subnet: {
             id: subnetId
           }
@@ -107,7 +108,7 @@ packages:
   - netcat-openbsd
 
 write_files:
-  # strongSwan ipsec.conf - 3 tunnels to each hub's VPN Gateway Instance 1
+  # strongSwan ipsec.conf - 3 VTI tunnels to each hub's VPN Gateway Instance 1
   - path: /etc/ipsec.conf
     content: |
       config setup
@@ -124,36 +125,33 @@ write_files:
         esp=aes256-sha256!
         type=tunnel
         auto=start
-        dpdaction=clear
+        dpdaction=restart
         dpddelay=30s
         dpdtimeout=120s
+        leftsubnet=0.0.0.0/0
+        rightsubnet=0.0.0.0/0
+        leftid=%any
 
-      # Hub1 tunnel (westus3) - VPN GW Instance 1
+      # Hub1 VTI tunnel (westus) - VPN GW Instance 1
       conn backup-hub1
         left=%defaultroute
-        leftsubnet=10.0.0.0/16
-        leftid=%any
         right={0}
-        rightsubnet=192.168.1.0/24,10.100.0.0/16,10.200.0.0/16
         rightid={0}
+        mark=100
 
-      # Hub2 tunnel (eastus2) - VPN GW Instance 1
+      # Hub2 VTI tunnel (westus3) - VPN GW Instance 1
       conn backup-hub2
         left=%defaultroute
-        leftsubnet=10.0.0.0/16
-        leftid=%any
         right={4}
-        rightsubnet=192.168.2.0/24,10.110.0.0/16,10.210.0.0/16
         rightid={4}
+        mark=200
 
-      # Hub3 tunnel (westus) - VPN GW Instance 1
+      # Hub3 VTI tunnel (eastus2) - VPN GW Instance 1
       conn backup-hub3
         left=%defaultroute
-        leftsubnet=10.0.0.0/16
-        leftid=%any
         right={6}
-        rightsubnet=192.168.3.0/24,10.120.0.0/16,10.220.0.0/16
         rightid={6}
+        mark=300
 
   # strongSwan secrets
   - path: /etc/ipsec.secrets
@@ -195,8 +193,9 @@ write_files:
       log syslog informational
       service integrated-vtysh-config
       !
-      ! Static route for on-prem network
-      ip route 10.0.0.0/16 Null0
+      ! Static route for on-prem advertisement (high admin distance
+      ! so it doesn't blackhole intra-VNet traffic to workload subnets)
+      ip route 10.0.0.0/16 Null0 250
       !
       ! Allow next-hop resolution via default route (required for BGP
       ! next-hops reachable only through IPsec tunnel policies)
@@ -311,9 +310,37 @@ write_files:
       # Replace __LOCAL_IP__ placeholder in FRR config
       sed -i "s/__LOCAL_IP__/$LOCAL_IP/g" /etc/frr/frr.conf
       
-      # Enable IP forwarding
-      echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
+      # Enable IP forwarding and disable rp_filter for VTI
+      cat >> /etc/sysctl.conf << 'SYSCTL'
+      net.ipv4.ip_forward=1
+      net.ipv4.conf.all.rp_filter=0
+      net.ipv4.conf.default.rp_filter=0
+      net.ipv4.conf.eth0.rp_filter=0
+      SYSCTL
       sysctl -w net.ipv4.ip_forward=1
+      sysctl -w net.ipv4.conf.all.rp_filter=0
+      sysctl -w net.ipv4.conf.default.rp_filter=0
+      sysctl -w net.ipv4.conf.eth0.rp_filter=0
+      
+      # Create VTI interfaces for each hub tunnel
+      echo "Creating VTI interfaces..."
+      ip tunnel add vti1 local $LOCAL_IP remote {0} mode vti key 100
+      ip addr add 169.254.0.1/32 dev vti1
+      ip link set vti1 up mtu 1400
+      sysctl -w net.ipv4.conf.vti1.disable_policy=1
+      sysctl -w net.ipv4.conf.vti1.rp_filter=0
+      
+      ip tunnel add vti2 local $LOCAL_IP remote {4} mode vti key 200
+      ip addr add 169.254.0.2/32 dev vti2
+      ip link set vti2 up mtu 1400
+      sysctl -w net.ipv4.conf.vti2.disable_policy=1
+      sysctl -w net.ipv4.conf.vti2.rp_filter=0
+      
+      ip tunnel add vti3 local $LOCAL_IP remote {6} mode vti key 300
+      ip addr add 169.254.0.3/32 dev vti3
+      ip link set vti3 up mtu 1400
+      sysctl -w net.ipv4.conf.vti3.disable_policy=1
+      sysctl -w net.ipv4.conf.vti3.rp_filter=0
       
       echo "Starting IPsec..."
       systemctl enable ipsec
@@ -324,11 +351,11 @@ write_files:
       sleep 30
       ipsec status || true
       
-      # Add routes to all 3 BGP peers via default gateway
+      # Add routes to BGP peers via VTI interfaces
       echo "Adding routes to BGP peers..."
-      ip route add {3}/32 via $DEFAULT_GW dev eth0 || true
-      ip route add {5}/32 via $DEFAULT_GW dev eth0 || true
-      ip route add {7}/32 via $DEFAULT_GW dev eth0 || true
+      ip route add {3}/32 dev vti1 || true
+      ip route add {5}/32 dev vti2 || true
+      ip route add {7}/32 dev vti3 || true
       
       echo "Starting FRR..."
       systemctl enable frr
