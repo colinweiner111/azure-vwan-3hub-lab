@@ -45,6 +45,8 @@ This lab uses FRR route maps with `as-path exclude 65515` to deliberately reprod
 5. **Static route redistribution** — Static routes for Azure prefixes (e.g., as backup) get redistributed into BGP toward another hub.
 
 > **Why `as-path exclude` is needed in this lab:** Because the lab uses a single FRR router talking to all three hubs with eBGP, the Azure VPN GW would normally see its own ASN `65515` in the path and drop the route (loop detection). The `as-path exclude 65515` simulates what happens naturally in scenarios 2–5, where the AS-path is stripped or lost as a side effect of the customer's network design.
+>
+> **ASN restriction:** Azure Route Maps `Add asPath` action rejects private ASNs (64512–65534) and reserved ASNs. For lab/testing purposes, use **documentation ASNs 64496–64511** (defined in [RFC 5398](https://datatracker.ietf.org/doc/html/rfc5398)) which Azure accepts. The lab's on-prem ASN `65001` is valid for BGP peering but cannot be injected via Route Maps `Add asPath`.
 
 ## Problem Statement
 
@@ -90,7 +92,7 @@ Hub3 is unaffected because the FRR VMs only apply `STANDARD_OUT` route-map to Hu
 
 The issue occurs when on-premises BGP advertises Azure prefixes learned from one Virtual WAN hub back into Azure via a VPN connection to another hub. The receiving hub sees the prefix as a **VPN gateway-learned route** rather than a **Remote Hub route**.
 
-Because Virtual WAN prefers gateway-learned routes over inter-hub (Remote Hub) routes, the VPN gateway route is selected as the best path — even though the vWAN backbone provides a more direct route.
+When the hub learns the same destination prefix via both VPN gateway and Remote Hub, Virtual WAN route selection applies: longest-prefix match (LPM) first, then hub routing preference (ExpressRoute → VPN → Remote Hub by default), then local-vs-remote origin. With equal prefix lengths and a hub routing preference that favors VPN, the gateway-learned route wins — even though the vWAN backbone provides a more direct path.
 
 > **Note:** The default Hub Routing Preference is `ExpressRoute`, with precedence: **ExpressRoute → VPN Gateway → Remote Hub**. In this lab, Hub1 and Hub2 are set to `VpnGateway` preference, which changes precedence to: **VPN Gateway → ExpressRoute → Remote Hub**. A third option, `AS Path`, selects the shortest AS path regardless of gateway type. This ensures VPN gateway-learned routes always win over Remote Hub routes on those hubs.
 
@@ -109,8 +111,11 @@ Prevent Azure-learned routes from being re-advertised back into Azure. Common ap
 - **Prefix lists** — explicitly block Azure spoke prefixes (e.g., `10.100.0.0/16`, `10.200.0.0/16`) from outbound advertisements to other hubs
 - **Route-maps** — apply deny rules for Azure-learned prefixes on specific BGP neighbors
 - **Hub routing preference** — set to AS Path mode so shorter Remote Hub paths are preferred over longer VPN-transited paths
+- **vWAN Route Maps** — apply Route Maps on the hub to drop or modify unwanted inbound routes at the hub level (useful when you can't control the on-prem device)
 
 The recommended fix is filtering at the source (on-prem router) to ensure hubs use the intended Remote Hub route over the vWAN backbone.
+
+> **Official reference:** [How to configure Route Maps — Virtual WAN](https://learn.microsoft.com/azure/virtual-wan/route-maps-how-to) documents the supported Route Maps actions including `Drop`, `Add`, and `Replace` for AS-path, community, and next-hop manipulation. Route Maps are the Azure-side fix when on-prem filtering isn't feasible.
 
 ## Why Two VMs?
 
@@ -192,7 +197,26 @@ cd azure-vwan-3hub-lab
 4. Check Hub2's effective routes:
    - **Expected**: Hub1's spoke prefixes (`10.100.0.0/16`, `10.200.0.0/16`) via `VPN_S2S_Gateway`
 
+**Expected Outputs — the tell:**
+
+| Hub | Prefix | NextHopType (Actual) | NextHopType (Expected w/o Transit) | Overridden? |
+|-----|--------|---------------------|------------------------------------|-------------|
+| Hub1 | `10.110.0.0/16` | `VPN_S2S_Gateway` | `Remote Hub` | **Yes** |
+| Hub1 | `10.210.0.0/16` | `VPN_S2S_Gateway` | `Remote Hub` | **Yes** |
+| Hub2 | `10.100.0.0/16` | `VPN_S2S_Gateway` | `Remote Hub` | **Yes** |
+| Hub2 | `10.200.0.0/16` | `VPN_S2S_Gateway` | `Remote Hub` | **Yes** |
+| Hub3 | `10.100.0.0/16` | `Remote Hub` | `Remote Hub` | No |
+| Hub3 | `10.110.0.0/16` | `Remote Hub` | `Remote Hub` | No |
+
 ### Scenario 3: Compare Hub3 (Normal) vs Hub1/Hub2 (Overridden)
+
+**Quick-check: Hub3 should look like this (all Remote Hub), Hub1/Hub2 should not:**
+
+| Field | Hub3 (Normal) | Hub1 or Hub2 (Overridden) |
+|-------|---------------|---------------------------|
+| NextHopType | `Remote Hub` | `VPN_S2S_Gateway` |
+| RouteOrigin | `hub-to-hub` | `10.0.0.10` (FRR VM IP) |
+| ASPath | `65520` | `65001` |
 
 ```powershell
 $rg = "vwan-3hub-lab"
@@ -214,6 +238,16 @@ az network vhub get-effective-routes -g $rg -n hub3-eastus2 `
 ```
 
 ### Scenario 4: Disable Transit to Restore Normal Routing
+
+**Before/After — what changes in Hub1 effective routes:**
+
+| Prefix | Before (Transit On) | After (Transit Off) |
+|--------|--------------------|-----------------------|
+| `10.110.0.0/16` | NextHopType: `VPN_S2S_Gateway` | NextHopType: `Remote Hub` |
+| `10.210.0.0/16` | NextHopType: `VPN_S2S_Gateway` | NextHopType: `Remote Hub` |
+| `10.0.0.0/16` | NextHopType: `VPN_S2S_Gateway` | NextHopType: `VPN_S2S_Gateway` |
+
+> On-prem prefix `10.0.0.0/16` stays as `VPN_S2S_Gateway` — that's correct. Only the Azure spoke prefixes should flip back to `Remote Hub`.
 
 1. SSH to `frr-router` and remove the TRANSIT route-maps:
    ```bash
@@ -268,11 +302,20 @@ sudo vtysh -c "show route-map"
 4. **Multi-hub vWAN** — Hub-to-hub routing across three regions
 5. **FRR route-maps** — Controlling which routes are re-advertised per BGP neighbor
 
-## Cleanup
+## Cost & Cleanup
+
+> **Cost note:** This lab deploys **3 vWAN VPN Gateways** (~$0.361/hr each × 2 scale units = **~$2.17/hr total**), plus 9 VMs (B2s), public IPs, and the vWAN hub fees. Optional Bastion (~$0.263/hr) and Firewall (~$0.395/hr per hub) add significantly. **Estimated base cost: ~$3–4/hr. Delete the resource group when you're done testing.**
 
 ```powershell
+# Delete everything — single command, takes ~10-15 minutes in background
 az group delete -n vwan-3hub-lab --yes --no-wait
+
+# Verify deletion is running
+az group show -n vwan-3hub-lab --query properties.provisioningState -o tsv
+# Expected: "Deleting"
 ```
+
+> **Tip:** VPN Gateways are the most expensive component. If you're pausing the lab, there's no way to "stop" them without deleting — consider deleting the resource group and redeploying when needed (~30-45 min to redeploy).
 
 ## Related
 
@@ -282,8 +325,11 @@ az group delete -n vwan-3hub-lab --yes --no-wait
 
 - [Virtual WAN Hub Routing](https://learn.microsoft.com/azure/virtual-wan/about-virtual-hub-routing)
 - [Virtual WAN Hub Routing Preference](https://learn.microsoft.com/azure/virtual-wan/about-virtual-hub-routing-preference)
+- [Virtual WAN Route Maps — How-To](https://learn.microsoft.com/azure/virtual-wan/route-maps-how-to)
+- [Virtual WAN Route Maps — About](https://learn.microsoft.com/azure/virtual-wan/route-maps-about)
 - [Virtual WAN Site-to-Site VPN](https://learn.microsoft.com/azure/virtual-wan/virtual-wan-site-to-site-portal)
 - [FRRouting Documentation](https://docs.frrouting.org/)
 - [strongSwan Documentation](https://docs.strongswan.org/)
+- [RFC 5398 — Documentation ASNs 64496–64511](https://datatracker.ietf.org/doc/html/rfc5398)
 
 MIT Licensed
