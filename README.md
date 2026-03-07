@@ -8,7 +8,7 @@ If on-premises BGP re-advertises Azure prefixes learned from one vWAN hub back t
 
 > **Lab Purpose**: Reproduce the scenario where **VPN gateway-learned routes override inter-hub (Remote Hub) routes** in Azure Virtual WAN, caused by an on-premises device re-advertising Azure spoke prefixes back through VPN S2S connections.
 
-This lab uses **two on-prem FRRouting/strongSwan VMs** with **six total IPsec tunnels** (two per hub) acting as **transit routers** that re-advertise Azure-learned routes between Hub1 and Hub3, but not Hub2. This causes Hub1 and Hub3 to prefer the VPN Gateway path over the normal Remote Hub path for each other's spoke prefixes.
+This lab uses **two on-prem FRRouting/strongSwan VMs** with **six total IPsec tunnels** (two per hub) acting as **transit routers** that re-advertise Azure-learned routes between Hub1 and Hub2, but not Hub3. This causes Hub1 and Hub2 to prefer the VPN Gateway path over the normal Remote Hub path for each other's spoke prefixes.
 
 ## Architecture Overview
 
@@ -18,9 +18,9 @@ This lab uses **two on-prem FRRouting/strongSwan VMs** with **six total IPsec tu
 
 | Hub | FRR Peer Role | BGP Outbound Policy |
 |-----|---------------|---------------------|
-| Hub1 (westus) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub3 |
-| Hub2 (westus3) | **STANDARD** | On-prem `10.0.0.0/16` only (no transit re-advertisement) |
-| Hub3 (eastus2) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub1 |
+| Hub1 (westus) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub2 |
+| Hub2 (westus3) | **TRANSIT** | On-prem `10.0.0.0/16` + re-advertised Azure routes from Hub1 |
+| Hub3 (eastus2) | **STANDARD** | On-prem `10.0.0.0/16` only (no transit re-advertisement) |
 
 ### IP Address Summary
 
@@ -53,24 +53,24 @@ When an on-premises device (or virtual appliance) re-advertises Azure spoke pref
 ### What Happens
 
 1. Hub1 advertises its spoke prefixes (`10.100.0.0/16`, `10.200.0.0/16`) to the FRR VM via BGP
-2. The FRR VM learns these routes and **re-advertises them to Hub3** (transit behavior)
-3. Hub3 now has **two paths** to Hub1's spokes:
+2. The FRR VM learns these routes and **re-advertises them to Hub2** (transit behavior)
+3. Hub2 now has **two paths** to Hub1's spokes:
    - **Remote Hub** path (hub-to-hub via vWAN backbone) — NextHopType: `Remote Hub`
    - **VPN Gateway** path (via on-prem FRR transit) — NextHopType: `VPN_S2S_Gateway`
 4. **The VPN Gateway path wins** because gateway-learned routes take precedence
 
-The same happens in reverse: Hub1 sees Hub3's spoke routes via VPN Gateway instead of Remote Hub.
+The same happens in reverse: Hub1 sees Hub2's spoke routes via VPN Gateway instead of Remote Hub.
 
 ### Expected vs Actual Routing
 
-| Destination | Hub1 Expected | Hub1 Actual | Hub2 Expected | Hub2 Actual |Hub3 Expected | Hub3 Actual |
+| Destination | Hub1 Expected | Hub1 Actual | Hub2 Expected | Hub2 Actual | Hub3 Expected | Hub3 Actual |
 |---|---|---|---|---|---|---|
-| `10.120.0.0/16` (spoke5) | RemoteHub | **VPN GW** | RemoteHub | RemoteHub | Direct | Direct |
-| `10.220.0.0/16` (spoke6) | RemoteHub | **VPN GW** | RemoteHub | RemoteHub | Direct | Direct |
-| `10.100.0.0/16` (spoke1) | Direct | Direct | RemoteHub | RemoteHub | RemoteHub | **VPN GW** |
-| `10.200.0.0/16` (spoke2) | Direct | Direct | RemoteHub | RemoteHub | RemoteHub | **VPN GW** |
+| `10.110.0.0/16` (spoke3) | RemoteHub | **VPN GW** | Direct | Direct | RemoteHub | RemoteHub |
+| `10.210.0.0/16` (spoke4) | RemoteHub | **VPN GW** | Direct | Direct | RemoteHub | RemoteHub |
+| `10.100.0.0/16` (spoke1) | Direct | Direct | RemoteHub | **VPN GW** | RemoteHub | RemoteHub |
+| `10.200.0.0/16` (spoke2) | Direct | Direct | RemoteHub | **VPN GW** | RemoteHub | RemoteHub |
 
-Hub2 is unaffected because the FRR VMs only apply `STANDARD_OUT` route-map to Hub2 peers (on-prem prefix only, no transit re-advertisement). Hub2 behaves normally because the FRR routers do not re-advertise Azure prefixes toward that hub, so it only learns spoke routes via the vWAN backbone (Remote Hub).
+Hub3 is unaffected because the FRR VMs only apply `STANDARD_OUT` route-map to Hub3 peers (on-prem prefix only, no transit re-advertisement). Hub3 behaves normally because the FRR routers do not re-advertise Azure prefixes toward that hub, so it only learns spoke routes via the vWAN backbone (Remote Hub).
 
 ### Portal Evidence — Hub Effective Routes
 
@@ -78,11 +78,11 @@ Hub2 is unaffected because the FRR VMs only apply `STANDARD_OUT` route-map to Hu
 
 ![Hub1 Effective Routes](image/Hub1-Effective-Routes.png)
 
-**Hub2 (STANDARD)** — spoke5/spoke6 routes correctly learned via Remote Hub:
+**Hub2 (TRANSIT)** — spoke1/spoke2 routes learned via VPN Gateway instead of Remote Hub:
 
 ![Hub2 Effective Routes](image/Hub2-Effective-Routes.png)
 
-**Hub3 (TRANSIT)** — spoke1/spoke2 routes learned via VPN Gateway instead of Remote Hub:
+**Hub3 (STANDARD)** — all remote spoke routes correctly learned via Remote Hub:
 
 ![Hub3 Effective Routes](image/Hub3-Effective-Routes.png)
 
@@ -92,7 +92,7 @@ The issue occurs when on-premises BGP advertises Azure prefixes learned from one
 
 Because Virtual WAN prefers gateway-learned routes over inter-hub (Remote Hub) routes, the VPN gateway route is selected as the best path — even though the vWAN backbone provides a more direct route.
 
-> **Note:** The default Hub Routing Preference is `ExpressRoute`, with precedence: **ExpressRoute → VPN Gateway → Remote Hub**. In this lab, Hub1 and Hub3 are set to `VpnGateway` preference, which changes precedence to: **VPN Gateway → ExpressRoute → Remote Hub**. A third option, `AS Path`, selects the shortest AS path regardless of gateway type. This ensures VPN gateway-learned routes always win over Remote Hub routes on those hubs.
+> **Note:** The default Hub Routing Preference is `ExpressRoute`, with precedence: **ExpressRoute → VPN Gateway → Remote Hub**. In this lab, Hub1 and Hub2 are set to `VpnGateway` preference, which changes precedence to: **VPN Gateway → ExpressRoute → Remote Hub**. A third option, `AS Path`, selects the shortest AS path regardless of gateway type. This ensures VPN gateway-learned routes always win over Remote Hub routes on those hubs.
 
 This behavior is expected in Virtual WAN when a prefix is learned from multiple sources and one path is learned through a gateway. It is not a defect — it is a consequence of route selection design.
 
@@ -169,14 +169,14 @@ cd azure-vwan-3hub-lab
    # Expect 3 peers in Established state — the BGP peer IPs are the VPN gateway
    # instance IPs inside each hub (found in Azure Portal → VPN Gateway → BGP Settings)
    ```
-4. Verify transit routes being advertised to Hub1 and Hub3:
+4. Verify transit routes being advertised to Hub1 and Hub2:
    ```bash
    # Check what frr-router advertises to Hub1's BGP peer
    sudo vtysh -c "show ip bgp neighbors <hub1-bgp-ip> advertised-routes"
-   # Should show: 10.0.0.0/16 + Hub3 spoke prefixes (10.120.0.0/16, 10.220.0.0/16)
+   # Should show: 10.0.0.0/16 + Hub2 spoke prefixes (10.110.0.0/16, 10.210.0.0/16)
 
-   # Check what frr-router advertises to Hub2's BGP peer
-   sudo vtysh -c "show ip bgp neighbors <hub2-bgp-ip> advertised-routes"
+   # Check what frr-router advertises to Hub3's BGP peer
+   sudo vtysh -c "show ip bgp neighbors <hub3-bgp-ip> advertised-routes"
    # Should show: 10.0.0.0/16 ONLY (no transit routes)
    ```
 
@@ -184,30 +184,30 @@ cd azure-vwan-3hub-lab
 
 1. Check vWAN effective routes in Azure Portal:
    - Navigate to **Virtual WAN** → **hub1** → **Routing** → **Effective Routes**
-2. Look for Hub3's spoke prefixes (`10.120.0.0/16`, `10.220.0.0/16`):
+2. Look for Hub2's spoke prefixes (`10.110.0.0/16`, `10.210.0.0/16`):
    - **Expected**: NextHopType = `VPN_S2S_Gateway` (overridden by transit)
    - **Without transit, would be**: NextHopType = `Remote Hub`
-3. Check Hub2's effective routes:
+3. Check Hub3's effective routes:
    - **Expected**: All remote spoke prefixes show NextHopType = `Remote Hub` (normal behavior)
-4. Check Hub3's effective routes:
+4. Check Hub2's effective routes:
    - **Expected**: Hub1's spoke prefixes (`10.100.0.0/16`, `10.200.0.0/16`) via `VPN_S2S_Gateway`
 
-### Scenario 3: Compare Hub2 (Normal) vs Hub1/Hub3 (Overridden)
+### Scenario 3: Compare Hub3 (Normal) vs Hub1/Hub2 (Overridden)
 
 ```powershell
 $rg = "vwan-3hub-lab"
 
-# Hub1 effective routes — should show Hub3 spokes via VPN Gateway
+# Hub1 effective routes — should show Hub2 spokes via VPN Gateway
 az network vhub get-effective-routes -g $rg -n hub1-westus `
   --resource-type HubVirtualNetworkConnection `
   --resource-id (az network vhub connection show -g $rg --vhub-name hub1-westus -n conn-spoke1 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
 
-# Hub2 effective routes — should show all remote spokes via Remote Hub
+# Hub2 effective routes — should show Hub1 spokes via VPN Gateway
 az network vhub get-effective-routes -g $rg -n hub2-westus3 `
   --resource-type HubVirtualNetworkConnection `
   --resource-id (az network vhub connection show -g $rg --vhub-name hub2-westus3 -n conn-spoke3 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
 
-# Hub3 effective routes — should show Hub1 spokes via VPN Gateway
+# Hub3 effective routes — should show all remote spokes via Remote Hub
 az network vhub get-effective-routes -g $rg -n hub3-eastus2 `
   --resource-type HubVirtualNetworkConnection `
   --resource-id (az network vhub connection show -g $rg --vhub-name hub3-eastus2 -n conn-spoke5 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
@@ -221,9 +221,9 @@ az network vhub get-effective-routes -g $rg -n hub3-eastus2 `
    configure terminal
    router bgp 65001
     address-family ipv4 unicast
-     # Change Hub1 and Hub3 to STANDARD_OUT (on-prem only)
+     # Change Hub1 and Hub2 to STANDARD_OUT (on-prem only)
      neighbor <hub1-bgp-ip> route-map STANDARD_OUT out
-     neighbor <hub3-bgp-ip> route-map STANDARD_OUT out
+     neighbor <hub2-bgp-ip> route-map STANDARD_OUT out
     exit-address-family
    exit
    exit
@@ -232,8 +232,8 @@ az network vhub get-effective-routes -g $rg -n hub3-eastus2 `
    ```
 2. Repeat on `frr-router-backup`
 3. Wait 1-2 minutes for BGP to reconverge
-4. Check Hub1 and Hub3 effective routes
-5. **Expected**: Hub1 and Hub3 now show remote spokes via `Remote Hub` (normal)
+4. Check Hub1 and Hub2 effective routes
+5. **Expected**: Hub1 and Hub2 now show remote spokes via `Remote Hub` (normal)
 
 ## FRR Router Commands
 
