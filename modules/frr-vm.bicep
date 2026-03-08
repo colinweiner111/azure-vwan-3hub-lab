@@ -342,6 +342,11 @@ write_files:
       sysctl -w net.ipv4.conf.vti3.disable_policy=1
       sysctl -w net.ipv4.conf.vti3.rp_filter=0
       
+      # Prevent Azure table 220 (DHCP default route) from overriding
+      # VTI routes in the main table for hub BGP peer addresses
+      echo "Adding ip rule for hub BGP peer routing..."
+      ip rule add to 192.168.0.0/16 lookup main priority 100
+      
       echo "Starting IPsec..."
       systemctl enable ipsec
       systemctl restart ipsec
@@ -350,6 +355,14 @@ write_files:
       echo "Waiting for IPsec tunnels..."
       sleep 30
       ipsec status || true
+      
+      # Flush iptables-legacy mangle rules auto-created by strongSwan.
+      # strongSwan's mark= config installs PREROUTING rules that mark
+      # incoming ESP-in-UDP packets, but these marks cause
+      # XfrmInTmplMismatch errors because the inbound SA has no mark.
+      # VTI inbound works via SPI lookup without marks.
+      iptables-legacy -t mangle -F PREROUTING || true
+      iptables-legacy -t mangle -F OUTPUT || true
       
       # Add routes to BGP peers via VTI interfaces
       echo "Adding routes to BGP peers..."
