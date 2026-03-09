@@ -190,6 +190,7 @@ module vpnSites 'modules/vpn-sites.bicep' = {
     onpremBgpIp2: frrVmBackup.outputs.privateIpAddress
     vpnPsk: vpnPsk
   }
+  dependsOn: [spokes]  // Serialize hub operations to avoid UpdateGatewayInProgress
 }
 
 // Hub2 VPN Sites (primary + backup)
@@ -206,6 +207,7 @@ module vpnSitesHub2 'modules/vpn-sites-hub2.bicep' = {
     onpremBgpIp2: frrVmBackup.outputs.privateIpAddress
     vpnPsk: vpnPsk
   }
+  dependsOn: [spokesHub2]  // Serialize hub operations to avoid UpdateGatewayInProgress
 }
 
 // Hub3 VPN Sites (primary + backup)
@@ -222,6 +224,7 @@ module vpnSitesHub3 'modules/vpn-sites-hub3.bicep' = {
     onpremBgpIp2: frrVmBackup.outputs.privateIpAddress
     vpnPsk: vpnPsk
   }
+  dependsOn: [spokesHub3]  // Serialize hub operations to avoid UpdateGatewayInProgress
 }
 
 // =============================================================================
