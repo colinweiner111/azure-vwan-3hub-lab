@@ -131,6 +131,7 @@ write_files:
         leftsubnet=0.0.0.0/0
         rightsubnet=0.0.0.0/0
         leftid=%any
+        leftupdown=/opt/flush-mangle.sh
 
       # Hub1 VTI tunnel (westus) - VPN GW Instance 1
       conn backup-hub1
@@ -152,6 +153,22 @@ write_files:
         right={6}
         rightid={6}
         mark=300
+
+  # strongSwan updown script - flushes iptables mangle rules that strongSwan
+  # auto-creates from mark= config. These mangle rules break BGP over VTI because
+  # they cause XfrmInTmplMismatch on inbound. VTI handles marking via tunnel key,
+  # so the mangle rules are unnecessary. Must flush after every tunnel UP event
+  # (not just at boot) since strongSwan re-adds them on each rekey/reconnect.
+  - path: /opt/flush-mangle.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      if [ "$PLUTO_VERB" = "up-client" ] || [ "$PLUTO_VERB" = "up-client-v6" ]; then
+        sleep 2
+        iptables-legacy -t mangle -F PREROUTING 2>/dev/null || true
+        iptables-legacy -t mangle -F OUTPUT 2>/dev/null || true
+        logger -t flush-mangle "Flushed iptables mangle chains after $PLUTO_CONNECTION $PLUTO_VERB"
+      fi
 
   # strongSwan secrets
   - path: /etc/ipsec.secrets
