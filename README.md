@@ -92,9 +92,9 @@ Hub3 is unaffected because the FRR VMs only apply `STANDARD_OUT` route-map to Hu
 
 The issue occurs when on-premises BGP advertises Azure prefixes learned from one Virtual WAN hub back into Azure via a VPN connection to another hub. The receiving hub sees the prefix as a **VPN gateway-learned route** rather than a **Remote Hub route**.
 
-When the hub learns the same destination prefix via both VPN gateway and Remote Hub, Virtual WAN route selection applies: longest-prefix match (LPM) first, then hub routing preference (ExpressRoute → VPN → Remote Hub by default), then local-vs-remote origin. With equal prefix lengths and a hub routing preference that favors VPN, the gateway-learned route wins — even though the vWAN backbone provides a more direct path.
+When the hub learns the same destination prefix via both VPN gateway and Remote Hub, Virtual WAN route selection applies: **Longest Prefix Match** first, then preference for **local virtual hub connections over routes learned from a remote hub**, and then the selected **Hub Routing Preference**. With equal prefix lengths and a gateway-learned route that is considered local to the hub, the VPN gateway route wins — even though the vWAN backbone provides a more direct path.
 
-> **Note:** The default Hub Routing Preference is `ExpressRoute`, with precedence: **ExpressRoute → VPN Gateway → Remote Hub**. In this lab, Hub1 and Hub2 are set to `VpnGateway` preference, which changes precedence to: **VPN Gateway → ExpressRoute → Remote Hub**. A third option, `AS Path`, selects the shortest AS path regardless of gateway type. This ensures VPN gateway-learned routes always win over Remote Hub routes on those hubs.
+> **Note:** The default Hub Routing Preference is `ExpressRoute`. The available modes are **ExpressRoute** (default), **VPN**, and **AS Path**. In AS Path mode, vWAN prefers the route with the shortest BGP AS-path rather than simply preferring a gateway type. However, changing the hubs to AS Path does **not** necessarily eliminate gateway-learned route override — if the AS-path length of the VPN-learned route is equal to or shorter than the Remote Hub path, the gateway-learned route still wins. In this lab, the FRR transit router strips ASN 65515 with `as-path exclude`, making the VPN-learned path shorter than the inter-hub backbone path (65520-65520), so the override occurs regardless of the Hub Routing Preference setting.
 
 This behavior is expected in Virtual WAN when a prefix is learned from multiple sources and one path is learned through a gateway. It is not a defect — it is a consequence of route selection design.
 
@@ -110,7 +110,7 @@ Prevent Azure-learned routes from being re-advertised back into Azure. Common ap
 - **AS-path filtering** — reject routes containing ASN 65515 from being re-advertised
 - **Prefix lists** — explicitly block Azure spoke prefixes (e.g., `10.100.0.0/16`, `10.200.0.0/16`) from outbound advertisements to other hubs
 - **Route-maps** — apply deny rules for Azure-learned prefixes on specific BGP neighbors
-- **Hub routing preference** — set to AS Path mode so shorter Remote Hub paths are preferred over longer VPN-transited paths
+- **Hub routing preference** — AS Path mode may help if the Remote Hub path has a shorter AS-path than the VPN-transited path, but it does **not** resolve all cases (e.g., when `as-path exclude` makes the VPN path shorter)
 - **vWAN Route Maps** — apply Route Maps on the hub to drop or modify unwanted inbound routes at the hub level (useful when you can't control the on-prem device)
 
 The recommended fix is filtering at the source (on-prem router) to ensure hubs use the intended Remote Hub route over the vWAN backbone.
