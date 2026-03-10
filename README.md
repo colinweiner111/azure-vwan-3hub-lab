@@ -124,6 +124,19 @@ Using separate VMs avoids Linux XFRM (IPsec policy) conflicts when multiple tunn
 - **Three IPsec tunnels** (one to each hub's VPN Gateway instance)
 - **Three BGP sessions** with distinct outbound policies per hub
 
+### Azure Table 220 and Data Plane Forwarding
+
+Azure Linux VMs use a DHCP-injected routing table (table 220) that contains a default route via the VNet gateway. A policy rule at priority 220 causes **all traffic** to consult this table before the main table. This overrides BGP-learned routes installed in the main table by FRR, causing forwarded packets to be sent out `eth0` instead of the VTI tunnels.
+
+The FRR VMs add two `ip rule` entries at boot to ensure the main table (with BGP routes) is consulted first:
+
+| Priority | Destination | Purpose |
+|----------|-------------|---------|
+| 100 | `192.168.0.0/16` | BGP peer addresses reach the VPN Gateway BGP IPs via VTI |
+| 101 | `10.0.0.0/8` | Spoke and on-prem data plane traffic is forwarded through VTI tunnels |
+
+Without the priority 101 rule, the BGP control plane works correctly (routes are learned and advertised) but the **data plane fails** — transit packets between spokes are sent out the default route instead of through the IPsec tunnels.
+
 ## Prerequisites
 
 - **PowerShell 7+** — Install from https://aka.ms/PSWindows (run with `pwsh`)
@@ -185,7 +198,27 @@ cd azure-vwan-3hub-lab
    # Should show: 10.0.0.0/16 ONLY (no transit routes)
    ```
 
-### Scenario 2: Observe Gateway-Learned Route Override
+### Scenario 2: Verify Cross-Hub Spoke-to-Spoke Connectivity
+
+Since the FRR transit causes spoke-to-spoke traffic between Hub1 and Hub2 to flow through the VPN tunnels, you can verify end-to-end data plane connectivity:
+
+```bash
+# From spoke3-vm (Hub2, 10.110.1.10) → spoke1-vm (Hub1, 10.100.1.10)
+ping -c 5 10.100.1.10
+# Expected: 0% loss, ~20-25ms RTT (Hub2 → VPN → FRR → VPN → Hub1)
+
+# From spoke1-vm (Hub1, 10.100.1.10) → spoke4-vm (Hub2, 10.210.1.10)
+ping -c 5 10.210.1.10
+# Expected: 0% loss, ~20-25ms RTT
+
+# From spoke4-vm (Hub2) → spoke5-vm (Hub3, 10.120.1.10)
+ping -c 5 10.120.1.10
+# Expected: 0% loss, ~70ms RTT (double tunnel hop: Hub2 → FRR → Hub3)
+```
+
+> **Note:** The TTL decreases by 1 for each hub hop through FRR. Single-hop transit (Hub1↔Hub2) shows TTL=63, double-hop (Hub2→Hub3 via FRR) shows TTL=62.
+
+### Scenario 3: Observe Gateway-Learned Route Override
 
 1. Check vWAN effective routes in Azure Portal:
    - Navigate to **Virtual WAN** → **hub1** → **Routing** → **Effective Routes**
@@ -208,7 +241,7 @@ cd azure-vwan-3hub-lab
 | Hub3 | `10.100.0.0/16` | `Remote Hub` | `Remote Hub` | No |
 | Hub3 | `10.110.0.0/16` | `Remote Hub` | `Remote Hub` | No |
 
-### Scenario 3: Compare Hub3 (Normal) vs Hub1/Hub2 (Overridden)
+### Scenario 4: Compare Hub3 (Normal) vs Hub1/Hub2 (Overridden)
 
 **Quick-check: Hub3 should look like this (all Remote Hub), Hub1/Hub2 should not:**
 
@@ -237,7 +270,7 @@ az network vhub get-effective-routes -g $rg -n hub3-eastus2 `
   --resource-id (az network vhub connection show -g $rg --vhub-name hub3-eastus2 -n conn-spoke5 --query id -o tsv) | ConvertFrom-Json | Select-Object -ExpandProperty value | Format-Table
 ```
 
-### Scenario 4: Disable Transit to Restore Normal Routing
+### Scenario 5: Disable Transit to Restore Normal Routing
 
 **Before/After — what changes in Hub1 effective routes:**
 
