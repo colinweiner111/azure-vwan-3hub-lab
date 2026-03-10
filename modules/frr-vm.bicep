@@ -361,8 +361,12 @@ write_files:
       
       # Prevent Azure table 220 (DHCP default route) from overriding
       # VTI routes in the main table for hub BGP peer addresses
-      echo "Adding ip rule for hub BGP peer routing..."
+      # Priority 100: BGP peer traffic (192.168.x.x) uses main table
+      # Priority 101: Spoke/on-prem data plane (10.x.x.x) uses main table
+      #   (without this, transit traffic is sent out eth0 instead of VTI tunnels)
+      echo "Adding ip rules for BGP peer and data plane routing..."
       ip rule add to 192.168.0.0/16 lookup main priority 100
+      ip rule add to 10.0.0.0/8 lookup main priority 101
       
       echo "Starting IPsec..."
       systemctl enable ipsec
