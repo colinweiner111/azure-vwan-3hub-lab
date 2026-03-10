@@ -166,7 +166,7 @@ cd azure-vwan-3hub-lab
 2. Verify IPsec tunnels (expect 3 SAs — one tunnel to each hub's VPN gateway):
    ```bash
    sudo ipsec status
-   # Look for 3 ESTABLISHED tunnels: hub1-tunnel, hub2-tunnel, hub3-tunnel
+   # Look for 3 ESTABLISHED tunnels: primary-hub1, primary-hub2, primary-hub3
    ```
 3. Verify BGP sessions are established with all three hub VPN gateways:
    ```bash
